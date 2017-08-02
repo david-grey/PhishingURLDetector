@@ -1,0 +1,4 @@
+TLD,count_of_@,count_of_hyphen,count_of_redirect,https,ip_consist,length_of_domain,length_of_query,length_of_url,not_port_80,count_of_subdomain
+
+'no of dots','presence of hyphen','len of url','presence of at',\
+'presence of double slash','no of subdir','no of subdomain','len of domain','no of queries','is IP','presence of Suspicious_TLD
