@@ -21,7 +21,7 @@ def download():
         pred = test_one(url)
         print (pred)
         if pred[0] == 1:
-            result = "Malicous"
+            result = "Malicious"
         else :
             result = "Benign"
         return render_template('result.html',url = url, result = result)

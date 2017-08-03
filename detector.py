@@ -3,20 +3,14 @@ import numpy as np
 import csv
 
 import sklearn.ensemble as ek
-from sklearn import cross_validation, tree, linear_model
-from sklearn.feature_selection import SelectFromModel
-from sklearn.externals import joblib
+from sklearn import cross_validation, tree
 from sklearn.naive_bayes import GaussianNB
-from sklearn.metrics import confusion_matrix
-from sklearn.pipeline import make_pipeline
-from sklearn import preprocessing
-from sklearn import svm
 from sklearn.linear_model import LogisticRegression
 from feature_extractor import predict_feature
 
 
 def train():
-    featureSet = pd.read_csv(r"C:\Users\wei04.TRN\Desktop\ml\PhishingURLDetector\data\train0.csv", index_col=0)
+    featureSet = pd.read_csv(r"data\train.csv", index_col=0)
     X = featureSet.drop(['label'], axis=1).sort_index(axis=1).values
     X = np.delete(X, 0, 0)
     y = featureSet['label'].values
@@ -41,7 +35,7 @@ def train():
 
 
 def test_one(url):
-    featureSet = pd.read_csv(r"C:\Users\wei04.TRN\Desktop\ml\PhishingURLDetector\data\train0.csv", index_col=0)
+    featureSet = pd.read_csv(r"data\train.csv", index_col=0)
     featureDummy = pd.DataFrame(columns=featureSet.columns).to_dict('list')
     a = predict_feature(url, featureDummy)
     formal = pd.DataFrame([a])
@@ -50,7 +44,7 @@ def test_one(url):
     return train().predict(formal)
 
 def test_many():
-    featureSet = pd.read_csv(r"C:\Users\wei04.TRN\Desktop\ml\PhishingURLDetector\data\train0.csv", index_col=0)
+    featureSet = pd.read_csv(r"data\train.csv", index_col=0)
     featureDummy = pd.DataFrame(columns=featureSet.columns).to_dict('list')
 
 

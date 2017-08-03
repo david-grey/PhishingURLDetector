@@ -9,6 +9,7 @@ from urllib.parse import urlparse
 import re
 import time
 import asyncio
+from domain_age import domain_age
 
 
 def google_api(url):
@@ -31,7 +32,7 @@ def google_api(url):
           }
           """ % url
         r = requests.post(
-            'https://safebrowsing.googleapis.com/v4/threatMatches:find?key=AIzaSyCxRsIuA3GzMeUSsR0Xv4JO2mjjwSwJSkc',
+            'https://safebrowsing.googleapis.com/v4/threatMatches:find?key=',
             data, timeout=3.05)
         if r.json() != {}:
             r.close()
@@ -41,17 +42,22 @@ def google_api(url):
     except:
         return 0
 
+def finde_attribute(dom,ele,attribute):
+    for subelement in dom.getElementsByTagName(ele):
+        if subelement.hasAttribute(attribute):
+            return subelement.attributes[attribute].value
+    return -1
 
-def sitepopularity(host):
+
+def site_popularity(host):
     xmlpath = 'http://data.alexa.com/data?cli=10&dat=snbamz&url=' + host
     # print xmlpath
     try:
         xml = urllib.request.urlopen(xmlpath).read()
         dom = minidom.parseString(xml)
-        rank_host = find_ele_with_attribute(dom, 'REACH', 'RANK')
-        # country=find_ele_with_attribute(dom,'REACH','RANK')
-        rank_country = find_ele_with_attribute(dom, 'COUNTRY', 'RANK')
-        if (rank):
+        rank_host = finde_attribute(dom, 'REACH', 'RANK')
+
+        if (rank_host):
             return 1
         else:
             return 0
@@ -86,7 +92,6 @@ def extract_feature(row):
         return {}
 
     feature = {}
-    tokens_words = re.split('\W+', url)
     parsed_url = urlparse(url)
     if re.match(r'.*\d*\.\d*\.\d*\.\d*,*', str(parsed_url.netloc)) == None:
         feature["ip_consist"] = 0
@@ -107,8 +112,9 @@ def extract_feature(row):
     feature['avg_domain_token_length'], feature['domain_token_count'], feature['largest_domain'] = Tokenise(
         parsed_url.netloc)
     feature['avg_path_token'], feature['path_token_count'], feature['largest_path'] = Tokenise(parsed_url.path)
-    feature['rank_host'] = sitepopularity(parsed_url.netloc)
+    feature['rank_host'] = site_popularity(parsed_url.netloc)
     feature['google'] = google_api(url)
+    feature['age'] = domain_age(parsed_url.netloc)
     # feature['rank_host'],feature['rank_country'] =sitepopularity(parsed_url.netloc)
     '''
     if (feature["ip_consist"] == 0):
@@ -126,10 +132,10 @@ def predict_feature(url,feature):
         feature["ip_consist"] = 0
     else:
         feature["ip_consist"] = 1
-    #feature["length_of_url"] = len(url)
     tokens_words=re.split('\W+',url)
     feature["count_of_exe"] = url.count('exe')
     feature["length_of_domain"] = len(parsed_url.netloc)
+    feature['age'] = domain_age(parsed_url.netloc)
     feature["count_of_@"] = url.count('@')
     feature["count_of_dot"] = url.count('.')
     feature["count_of_do"] = url.count('$')
@@ -141,7 +147,7 @@ def predict_feature(url,feature):
     feature['avg_path_token'],feature['path_token_count'],feature['largest_path'] = Tokenise(parsed_url.path)
     # feature["length_of_query"] = len(parsed_url.query.split('&')) if parsed_url.query else 0
     feature["not_port_80"] = 1 if (url.count(":") - ("://" in url))>0 else 0
-    feature['rank_host'] = sitepopularity(parsed_url.netloc)
+    feature['rank_host'] = site_popularity(parsed_url.netloc)
     feature['google'] = google_api(url)
     '''
     if (feature["ip_consist"] == 0):
@@ -157,9 +163,8 @@ def predict_feature(url,feature):
 def main():
     start = time.time()
     ls = []
-    loop = asyncio.get_event_loop()
 
-    async def main():
+    async def down():
         with open("data/datan.csv", "r", encoding='utf8') as data:
             csvfile = csv.reader(data)
             loop = asyncio.get_event_loop()
@@ -175,29 +180,7 @@ def main():
             ls.append(response)
 
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(main())
-    """
-    pool = ThreadPoolExecutor(100)
-    ls = []
-    source = []
-    cnt = 0
-    with open("data.csv","r", encoding='utf8') as data:
-        csvfile = csv.reader(data)
-        for row in csvfile:
-            cnt += 1
-            source.append(row)
-            ls.append(extract_feature(row))
-            if cnt % 40 == 0:
-                print (cnt)
-            if cnt > 10:
-                break
-
-    while not q.empty():
-        cnt -= 1
-        if cnt % 40 == 0:
-            print (cnt)
-        ls.append(q.get().result())
-    """
+    loop.run_until_complete(down())
 
     print(time.time() - start)
     featureSet = pd.DataFrame(ls)
